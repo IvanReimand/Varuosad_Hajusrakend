@@ -1,0 +1,65 @@
+from flask import Flask, jsonify, request
+import json
+
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    try:
+        # Open the file with ISO-8859-1 encoding
+        with open('LE.txt', 'r', encoding='ISO-8859-1') as file:
+            data = file.read()
+
+        # Return the content in plain text (this will not affect the JSON output)
+        return f"<pre>{data}</pre>"
+
+    except FileNotFoundError:
+        return "File not found. Make sure LE.txt exists in the same directory."
+
+@app.route('/json/spare-parts', methods=['GET'])
+def file_to_json():
+    try:
+        # Open the file with ISO-8859-1 encoding
+        with open('LE.txt', 'r', encoding='ISO-8859-1') as file:
+            # Read lines from the file
+            lines = file.readlines()
+
+        # Extract headers (adjust as per your file's actual structure)
+        headers = ["sn", "name", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "price", "brand", "Column11"]
+
+        json_data = []
+
+        # Loop through each line in the file and create a dictionary for each line
+        for line in lines:
+            values = line.strip().split("\t")  # Split each line by tab
+            if len(values) == len(headers):
+                # Remove extra quotes surrounding each value
+                values = [value.strip('"') for value in values]
+
+                row_dict = dict(zip(headers, values))  # Combine headers and values into a dictionary
+                json_data.append(row_dict)
+
+        # Get filter query parameters from the URL
+        filter_name = request.args.get('name')
+        filter_sn = request.args.get('sn')
+
+        # Filter the json_data based on the query parameters
+        if filter_name:
+            json_data = [item for item in json_data if filter_name.lower() in item['name'].lower()]
+
+        if filter_sn:
+            json_data = [item for item in json_data if filter_sn in item['sn']]
+
+        # Convert the filtered data to JSON
+        json_string = json.dumps(json_data, indent=4)
+
+        # Return the JSON data as a pretty-printed JSON string
+        return f"<pre>{json_string}</pre>"
+
+    except FileNotFoundError:
+        return "File not found. Make sure LE.txt exists in the same directory."
+    except Exception as e:
+        return f"Error processing the file: {str(e)}"
+
+if __name__ == '__main__':
+    app.run(debug=True)

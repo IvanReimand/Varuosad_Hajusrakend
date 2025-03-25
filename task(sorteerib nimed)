@@ -64,3 +64,22 @@ def file_to_json():
 if __name__ == '__main__':
     app.run(debug=True)
     # Panen tööle selle rakenduse
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+link:http://127.0.0.1:5000/json/spare-parts?name=polt
